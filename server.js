@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
-
+const PORT = process.env.PORT || 3004;
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -155,7 +155,7 @@ app.get('/player', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'player.html'));
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
 });
