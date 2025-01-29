@@ -1,217 +1,114 @@
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws');
+const { Server } = require('socket.io');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-
-// Configure WebSocket with proper settings for Render
-const wss = new WebSocket.Server({ 
-    server,
-    clientTracking: true,
-    // Add necessary headers for Render
-    perMessageDeflate: {
-        zlibDeflateOptions: {
-            // See zlib defaults.
-            chunkSize: 1024,
-            memLevel: 7,
-            level: 3
-        },
-        zlibInflateOptions: {
-            chunkSize: 10 * 1024
-        },
-        // Other options settable:
-        clientNoContextTakeover: true, // Defaults to negotiated value.
-        serverNoContextTakeover: true, // Defaults to negotiated value.
-        serverMaxWindowBits: 10, // Defaults to negotiated value.
-        // Below options specified as default values.
-        concurrencyLimit: 10, // Limits zlib concurrency for perf.
-        threshold: 1024 // Size (in bytes) below which messages
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
     }
-});
-
-// Enable CORS for websocket
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
 });
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// Store active users and game results
-const activeUsers = new Map();
-const persistentUsers = new Set();
-const gameResults = [];
-let currentGameSettings = {
-    difficulty: 'easy',
-    cardSet: 'emoji',
-    soundEnabled: true
+// Store game state
+const state = {
+    activeUsers: new Map(), // socket.id -> username
+    persistentUsers: new Set(), // usernames
+    gameResults: [],
+    settings: {
+        difficulty: 'easy',
+        cardSet: 'emoji',
+        soundEnabled: true
+    }
 };
 
-// WebSocket connection handling
-wss.on('connection', (ws, req) => {
-    //console.log('New client connected');
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+   // console.log('New client connected:', socket.id);
 
-    // Ping-pong mechanism to keep connection alive
-    ws.isAlive = true;
-    ws.on('pong', () => {
-        ws.isAlive = true;
+    // Send initial state to new client
+    socket.emit('gameSettings', state.settings);
+    socket.emit('gameResults', state.gameResults);
+    socket.emit('activeUsers', Array.from(state.persistentUsers));
+
+    // Handle login
+    socket.on('login', (username) => {
+     //   console.log('Login attempt:', username);
+        state.activeUsers.set(socket.id, username);
+        state.persistentUsers.add(username);
+        io.emit('activeUsers', Array.from(state.persistentUsers));
     });
 
-    // Send initial state
-    ws.send(JSON.stringify({
-        type: 'gameSettings',
-        settings: currentGameSettings
-    }));
+    // Handle game result
+    socket.on('gameResult', (data) => {
+        const result = {
+            username: state.activeUsers.get(socket.id),
+            difficulty: data.difficulty,
+            moves: data.moves,
+            time: data.time,
+            timestamp: new Date().toISOString()
+        };
+        state.gameResults.push(result);
+        io.emit('gameResults', state.gameResults);
+    });
 
-    ws.send(JSON.stringify({
-        type: 'gameResults',
-        results: gameResults
-    }));
+    // Handle game settings update
+    socket.on('gameSettings', (settings) => {
+        state.settings = settings;
+        io.emit('gameSettings', settings);
+    });
 
-    ws.send(JSON.stringify({
-        type: 'activeUsers',
-        users: Array.from(persistentUsers)
-    }));
+    // Handle new game request
+    socket.on('newGame', (settings) => {
+        state.settings = settings;
+        io.emit('newGame', settings);
+    });
 
-    ws.on('message', (message) => {
-        try {
-            const data = JSON.parse(message);
-          //  console.log('Received message:', data.type);
-            
-            switch(data.type) {
-                case 'login':
-                    activeUsers.set(ws, data.username);
-                    persistentUsers.add(data.username);
-                    broadcastActiveUsers();
-                    break;
-                
-                case 'gameResult':
-                    const result = {
-                        username: activeUsers.get(ws),
-                        difficulty: data.difficulty,
-                        moves: data.moves,
-                        time: data.time,
-                        timestamp: new Date().toISOString()
-                    };
-                    gameResults.push(result);
-                    broadcastGameResults();
-                    break;
-
-                case 'gameSettings':
-                    currentGameSettings = data.settings;
-                    broadcast(JSON.stringify({
-                        type: 'gameSettings',
-                        settings: currentGameSettings
-                    }));
-                    break;
-
-                case 'newGame':
-                    currentGameSettings = data.settings;
-                    broadcast(JSON.stringify({
-                        type: 'newGame',
-                        settings: currentGameSettings
-                    }));
-                    break;
-
-                case 'deleteResult':
-                    const indexToDelete = gameResults.findIndex(
-                        result => result.timestamp === data.timestamp
-                    );
-                    if (indexToDelete !== -1) {
-                        gameResults.splice(indexToDelete, 1);
-                        broadcastGameResults();
-                    } else {
-                        ws.send(JSON.stringify({
-                            type: 'error',
-                            message: 'Result not found'
-                        }));
-                    }
-                    break;
-
-                case 'resetAllResults':
-                    gameResults.length = 0;
-                    activeUsers.clear();
-                    persistentUsers.clear();
-                    broadcast(JSON.stringify({ type: 'resetGame' }));
-                    broadcastGameResults();
-                    broadcastActiveUsers();
-                    break;
-            }
-        } catch (error) {
-            console.error('Error processing message:', error);
+    // Handle result deletion
+    socket.on('deleteResult', (timestamp) => {
+        const index = state.gameResults.findIndex(
+            result => result.timestamp === timestamp
+        );
+        if (index !== -1) {
+            state.gameResults.splice(index, 1);
+            io.emit('gameResults', state.gameResults);
         }
     });
 
-    ws.on('close', () => {
-        //console.log('Client disconnected');
-        const username = activeUsers.get(ws);
-        activeUsers.delete(ws);
+    // Handle reset all
+    socket.on('resetAllResults', () => {
+        state.gameResults = [];
+        state.activeUsers.clear();
+        state.persistentUsers.clear();
+        io.emit('resetGame');
+        io.emit('gameResults', state.gameResults);
+        io.emit('activeUsers', Array.from(state.persistentUsers));
+    });
 
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        const username = state.activeUsers.get(socket.id);
+        state.activeUsers.delete(socket.id);
+
+        // Check if user is still connected from another socket
         let stillConnected = false;
-        activeUsers.forEach((name) => {
-            if (name === username) {
-                stillConnected = true;
-            }
+        state.activeUsers.forEach((name) => {
+            if (name === username) stillConnected = true;
         });
 
         if (!stillConnected && username) {
-            persistentUsers.delete(username);
-            broadcastActiveUsers();
+            state.persistentUsers.delete(username);
+            io.emit('activeUsers', Array.from(state.persistentUsers));
         }
-    });
-
-    ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+     //   console.log('Client disconnected:', socket.id);
     });
 });
-
-// Implement ping-pong to keep connections alive
-const interval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-        if (ws.isAlive === false) {
-           // console.log('Terminating stale connection');
-            return ws.terminate();
-        }
-        ws.isAlive = false;
-        ws.ping(() => {});
-    });
-}, 30000);
-
-wss.on('close', () => {
-    clearInterval(interval);
-});
-
-function broadcastActiveUsers() {
-    broadcast(JSON.stringify({
-        type: 'activeUsers',
-        users: Array.from(persistentUsers)
-    }));
-}
-
-function broadcastGameResults() {
-    broadcast(JSON.stringify({
-        type: 'gameResults',
-        results: gameResults
-    }));
-}
-
-function broadcast(data) {
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            try {
-                client.send(data);
-            } catch (error) {
-                console.error('Error broadcasting:', error);
-            }
-        }
-    });
-}
 
 // Routes
 app.get('/', (req, res) => {

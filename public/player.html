@@ -5,198 +5,264 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memory Game</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        :root {
-            --primary-color: #2196F3;
-            --card-back: #1976D2;
-            --card-front: #ffffff;
-            --text-color: #333333;
-            --bg-color: #f0f2f5;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-        }
+:root {
+    --primary-color: #2196F3;
+    --card-back: #1976D2;
+    --card-front: #ffffff;
+    --text-color: #333333;
+    --bg-color: #f0f2f5;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
 
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 20px;
-        }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 20px;
+}
 
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 
-        .login-container {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-			
-        }
+.login-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
 
-        .login-container input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 2px solid var(--primary-color);
-            border-radius: 5px;
-            font-size: 16px;
-        }
+.login-container input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid var(--primary-color);
+    border-radius: 5px;
+    font-size: 16px;
+}
 
-        .login-container button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
+.login-container button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
 
-        .login-container button:hover {
-            background-color: var(--card-back);
-        }
+.login-container button:hover {
+    background-color: var(--card-back);
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
 
-        h1 {
-            color: var(--primary-color);
-            font-size: 1.8em;
-            margin-bottom: 20px;
-        }
+h1 {
+    color: var(--primary-color);
+    font-size: 1.8em;
+    margin-bottom: 20px;
+}
 
-        .player-info {
-            font-size: 1.2em;
-            margin-bottom: 20px;
-        }
+.player-info {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
 
-        .game-stats {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0;
-            font-size: 1.2em;
-        }
+.game-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+    font-size: 1.2em;
+}
 
-        .stat {
-            background: var(--card-front);
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px var(--shadow-color);
-        }
+.stat {
+    background: var(--card-front);
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
 
-        .game-board {
-            display: grid;
-            gap: 10px;
-            margin: 0 auto;
-            max-width: 800px;
-            padding: 20px;
-        }
+.game-board {
+    display: grid;
+    gap: 10px;
+    margin: 0 auto;
+    max-width: 800px;
+    padding: 20px;
+}
 
-        .card {
-            aspect-ratio: 1;
-            border: none;
-            border-radius: 10px;
-            background-color: var(--card-back);
-            cursor: pointer;
-            position: relative;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-            font-size: 4em;
-        }
+.card {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 10px;
+    background-color: var(--card-back);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    font-size: 2.5em;
+}
 
-        .card.flipped {
-            transform: rotateY(180deg);
-        }
+/* Specific grid sizes for desktop */
+.game-board[data-grid="4"] .card {
+    font-size: 2.5em;
+}
 
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px var(--shadow-color);
-        }
+.game-board[data-grid="6"] .card {
+    font-size: 1.8em;
+}
 
-        .card-front {
-            background-color: var(--card-front);
-            color: var(--text-color);
-            transform: rotateY(180deg);
-        }
+.game-board[data-grid="8"] .card {
+    font-size: 1.4em;
+}
 
-        .card-back {
-            background-color: var(--card-back);
-            color: var(--card-front);
-        }
+.card.flipped {
+    transform: rotateY(180deg);
+}
 
-        .win-message {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--card-front);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px var(--shadow-color);
-            text-align: center;
-            z-index: 1000;
-        }
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
 
-        .win-message h2 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
+.card-front {
+    background-color: var(--card-front);
+    color: var(--text-color);
+    transform: rotateY(180deg);
+}
 
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
+.card-back {
+    background-color: var(--card-back);
+    color: var(--card-front);
+}
 
-        @media (max-width: 600px) {
-            .game-stats {
-                flex-direction: column;
-                align-items: center;
-                gap: 10px;
-            }
-        }
+.win-message {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--card-front);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px var(--shadow-color);
+    text-align: center;
+    z-index: 1000;
+}
+
+.win-message h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 0;
+    }
+
+    .game-stats {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stat {
+        width: 90%;
+        max-width: 300px;
+        text-align: center;
+    }
+
+    .game-board {
+        gap: 6px;
+        padding: 10px;
+        max-width: 100%;
+    }
+
+    /* Mobile-specific font sizes */
+    .game-board[data-grid="4"] .card {
+        font-size: 2.5em;
+    }
+
+    .game-board[data-grid="6"] .card {
+        font-size: 1.9em;
+    }
+
+    .game-board[data-grid="8"] .card {
+        font-size: 1.4em;
+        gap: 4px;
+    }
+
+    .win-message {
+        width: 90%;
+        max-width: 320px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 320px) {
+    .game-board[data-grid="4"] .card {
+        font-size: 2em;
+    }
+
+    .game-board[data-grid="6"] .card {
+        font-size: 1.3em;
+    }
+
+    .game-board[data-grid="8"] .card {
+        font-size: 1em;
+    }
+}
     </style>
 </head>
 <body>
@@ -237,9 +303,9 @@
 
     <div id="overlay" class="overlay"></div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // WebSocket connection
-        const ws = new WebSocket(`ws://${window.location.host}`);
+        const socket = io();
         let gameState = {
             cards: [],
             flippedCards: [],
@@ -285,62 +351,52 @@
             const username = document.getElementById('username').value.trim();
             
             if (username) {
-                // Send login message to server
-                ws.send(JSON.stringify({
-                    type: 'login',
-                    username: username
-                }));
-
-                // Update UI
+                socket.emit('login', username);
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('playerName').textContent = username;
                 sessionStorage.setItem('username', username);
             }
         });
 
-        // WebSocket message handling
-         // Add this to your WebSocket message handler
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Received message:', data);
-            
-            switch(data.type) {
-                case 'gameSettings':
-                    console.log('Updating game settings:', data.settings);
-                    updateGameSettings(data.settings);
-                    break;
-                case 'newGame':
-                    console.log('Starting new game with settings:', data.settings);
-                    updateGameSettings(data.settings);
-                    initializeGame();
-                    document.getElementById('winMessage').style.display = 'none';
-                    document.getElementById('overlay').style.display = 'none';
-                    break;
-                case 'resetGame':
-                    console.log('Resetting entire game');
-                    resetGame();
-                    break;
-                case 'usernameInvalid':
-                    // Username no longer valid, show login
-                    sessionStorage.removeItem('username');
-                    document.getElementById('loginOverlay').style.display = 'flex';
-                    document.getElementById('username').value = '';
-                    document.getElementById('playerName').textContent = '';
-                    break;
+        // Socket.IO event handling
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            const username = sessionStorage.getItem('username');
+            if (username) {
+                socket.emit('login', username);
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('playerName').textContent = username;
             }
-        };
+        });
+
+        socket.on('gameSettings', (settings) => {
+            console.log('Updating game settings:', settings);
+            updateGameSettings(settings);
+        });
+
+        socket.on('newGame', (settings) => {
+            console.log('Starting new game with settings:', settings);
+            updateGameSettings(settings);
+            initializeGame();
+            document.getElementById('winMessage').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        });
+
+        socket.on('resetGame', () => {
+            console.log('Resetting game');
+            resetGame();
+        });
 
         function updateGameSettings(settings) {
             gameState.difficulty = settings.difficulty;
             gameState.cardSet = settings.cardSet;
             gameState.soundEnabled = settings.soundEnabled;
+            initializeGame();
         }
 
         function resetGame() {
-            // Clear session storage
             sessionStorage.removeItem('username');
             
-            // Reset game state
             gameState = {
                 cards: [],
                 flippedCards: [],
@@ -354,22 +410,13 @@
                 cardSet: 'emoji'
             };
             
-            // Stop timer if running
             stopTimer();
-            
-            // Clear the game board
             document.getElementById('gameBoard').innerHTML = '';
-            
-            // Reset statistics
             document.getElementById('moves').textContent = '0';
             document.getElementById('matches').textContent = '0';
             document.getElementById('timer').textContent = '00:00';
-            
-            // Hide win message if visible
             document.getElementById('winMessage').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
-            
-            // Show login overlay
             document.getElementById('loginOverlay').style.display = 'flex';
             document.getElementById('username').value = '';
             document.getElementById('playerName').textContent = '';
@@ -410,7 +457,9 @@
             const gridSize = config.gridSizes[gameState.difficulty];
             const dimension = Math.sqrt(gridSize);
             
-            // Reset game state
+            // Add grid size data attribute for mobile styling
+            gameBoard.dataset.grid = dimension.toString();
+            
             gameState.cards = [];
             gameState.flippedCards = [];
             gameState.matchedPairs = [];
@@ -418,23 +467,17 @@
             gameState.isPlaying = false;
             stopTimer();
             
-            // Set grid dimensions
             gameBoard.style.gridTemplateColumns = `repeat(${dimension}, 1fr)`;
-            
-            // Clear existing cards
             gameBoard.innerHTML = '';
             
-            // Update UI
             document.getElementById('moves').textContent = '0';
             document.getElementById('matches').textContent = '0';
             document.getElementById('timer').textContent = '00:00';
             
-            // Create and shuffle cards
             const symbols = config.cardSets[gameState.cardSet];
             const gameSymbols = symbols.slice(0, gridSize / 2);
             const cardSymbols = shuffleArray([...gameSymbols, ...gameSymbols]);
             
-            // Add cards to board
             cardSymbols.forEach((symbol, index) => {
                 const card = createCard(symbol, index);
                 gameBoard.appendChild(card);
@@ -505,15 +548,13 @@
             stopTimer();
             playSound('win');
             
-            // Send game result to server
-            ws.send(JSON.stringify({
-                type: 'gameResult',
+            // Send game result to server using Socket.IO
+            socket.emit('gameResult', {
                 difficulty: gameState.difficulty,
                 moves: gameState.moves,
                 time: gameState.seconds
-            }));
+            });
             
-            // Show win message
             document.getElementById('finalMoves').textContent = gameState.moves;
             document.getElementById('finalTime').textContent = formatTime(gameState.seconds);
             document.getElementById('winMessage').style.display = 'block';
@@ -531,16 +572,11 @@
             sounds[type].play().catch(err => console.log('Sound play error:', err));
         }
 
-// Initialize on page load
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             const username = sessionStorage.getItem('username');
             if (username) {
-                // Instead of immediately logging in, check if username is still valid
-                ws.send(JSON.stringify({
-                    type: 'checkUsername',
-                    username: username
-                }));
-                // Hide login overlay until we get server response
+                socket.emit('login', username);
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('playerName').textContent = username;
             }
@@ -550,7 +586,6 @@
         document.getElementById('Ok').addEventListener('click', () => {
             document.getElementById('winMessage').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
-            //initializeGame();
         });
     </script>
 </body>

@@ -176,26 +176,27 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const ws = new WebSocket(`ws://${window.location.host}`);
+        const socket = io();
         let soundEnabled = true;
         
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            switch(data.type) {
-                case 'activeUsers':
-                    updateActiveUsers(data.users);
-                    break;
-                case 'gameResults':
-                    updateGameResults(data.results);
-                    break;
-                case 'error':
-                    console.error('Server error:', data.message);
-                    alert('Error: ' + data.message);
-                    break;
-            }
-        };
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('activeUsers', (users) => {
+            updateActiveUsers(users);
+        });
+
+        socket.on('gameResults', (results) => {
+            updateGameResults(results);
+        });
+
+        socket.on('error', (error) => {
+            console.error('Server error:', error);
+            alert('Error: ' + error.message);
+        });
 
         document.getElementById('difficulty').addEventListener('change', (e) => {
             broadcastGameSettings();
@@ -212,17 +213,12 @@
         });
 
         document.getElementById('newGame').addEventListener('click', () => {
-            ws.send(JSON.stringify({
-                type: 'newGame',
-                settings: getGameSettings()
-            }));
+            socket.emit('newGame', getGameSettings());
         });
 
         document.getElementById('resetAllResults').addEventListener('click', () => {
             if (confirm('Are you sure you want to delete all game results? This cannot be undone.')) {
-                ws.send(JSON.stringify({
-                    type: 'resetAllResults'
-                }));
+                socket.emit('resetAllResults');
             }
         });
 
@@ -235,10 +231,7 @@
         }
 
         function broadcastGameSettings() {
-            ws.send(JSON.stringify({
-                type: 'gameSettings',
-                settings: getGameSettings()
-            }));
+            socket.emit('gameSettings', getGameSettings());
         }
 
         function updateActiveUsers(users) {
@@ -249,10 +242,7 @@
         }
 
         function deleteResult(timestamp) {
-            ws.send(JSON.stringify({
-                type: 'deleteResult',
-                timestamp: timestamp
-            }));
+            socket.emit('deleteResult', timestamp);
         }
 
         function updateGameResults(results) {
