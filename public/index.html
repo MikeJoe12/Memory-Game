@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            color: #2196F3;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        select, button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 2px solid #2196F3;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #2196F3;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .active-users {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .user-badge {
+            background-color: #2196F3;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .game-controls {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            color: #cc0000;
+            background: none;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .reset-all-btn {
+            background-color: #ff4444;
+            border-color: #ff4444;
+            color: white;
+        }
+
+        .reset-all-btn:hover {
+            background-color: #cc0000;
+            border-color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1><center>Mishail's Memory Game</center></h1>
+            
+            <div class="game-controls">
+                <h2>Game Settings</h2>
+                <div class="controls">
+                    <select id="difficulty">
+                        <option value="easy">Easy (4×4)</option>
+                        <option value="medium">Medium (6×6)</option>
+                        <option value="hard">Hard (8×8)</option>
+                    </select>
+                    <select id="cardSet">
+                        <option value="emoji">Emoji</option>
+                        <option value="animals">Animals</option>
+                        <option value="symbols">Symbols</option>
+                        <option value="cards">Playing Cards</option>
+                    </select>
+                    <button id="soundToggle">🔊 Sound On</button>
+                    <button id="newGame">Start New Game for All</button>
+                </div>
+            </div>
+
+            <h2>Active Players</h2>
+            <div id="activeUsers" class="active-users"></div>
+        </div>
+
+        <div class="card">
+            <div class="results-header">
+                <h2>Game Results</h2>
+                <button id="resetAllResults" class="reset-all-btn">Reset All Results</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Difficulty</th>
+                        <th>Moves</th>
+                        <th>Time</th>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket(`ws://${window.location.host}`);
+        let soundEnabled = true;
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            switch(data.type) {
+                case 'activeUsers':
+                    updateActiveUsers(data.users);
+                    break;
+                case 'gameResults':
+                    updateGameResults(data.results);
+                    break;
+                case 'error':
+                    console.error('Server error:', data.message);
+                    alert('Error: ' + data.message);
+                    break;
+            }
+        };
+
+        document.getElementById('difficulty').addEventListener('change', (e) => {
+            broadcastGameSettings();
+        });
+
+        document.getElementById('cardSet').addEventListener('change', (e) => {
+            broadcastGameSettings();
+        });
+
+        document.getElementById('soundToggle').addEventListener('click', (e) => {
+            soundEnabled = !soundEnabled;
+            e.target.textContent = soundEnabled ? '🔊 Sound On' : '🔈 Sound Off';
+            broadcastGameSettings();
+        });
+
+        document.getElementById('newGame').addEventListener('click', () => {
+            ws.send(JSON.stringify({
+                type: 'newGame',
+                settings: getGameSettings()
+            }));
+        });
+
+        document.getElementById('resetAllResults').addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete all game results? This cannot be undone.')) {
+                ws.send(JSON.stringify({
+                    type: 'resetAllResults'
+                }));
+            }
+        });
+
+        function getGameSettings() {
+            return {
+                difficulty: document.getElementById('difficulty').value,
+                cardSet: document.getElementById('cardSet').value,
+                soundEnabled: soundEnabled
+            };
+        }
+
+        function broadcastGameSettings() {
+            ws.send(JSON.stringify({
+                type: 'gameSettings',
+                settings: getGameSettings()
+            }));
+        }
+
+        function updateActiveUsers(users) {
+            const container = document.getElementById('activeUsers');
+            container.innerHTML = users.map(user => 
+                `<div class="user-badge">${user}</div>`
+            ).join('');
+        }
+
+        function deleteResult(timestamp) {
+            ws.send(JSON.stringify({
+                type: 'deleteResult',
+                timestamp: timestamp
+            }));
+        }
+
+        function updateGameResults(results) {
+            const tbody = document.getElementById('resultsTable');
+            tbody.innerHTML = results.map(result => `
+                <tr>
+                    <td>${result.username}</td>
+                    <td>${result.difficulty}</td>
+                    <td>${result.moves}</td>
+                    <td>${formatTime(result.time)}</td>
+                    <td>${new Date(result.timestamp).toLocaleString()}</td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteResult('${result.timestamp}')">×</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>
