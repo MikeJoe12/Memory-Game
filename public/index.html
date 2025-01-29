@@ -125,12 +125,37 @@
             background-color: #cc0000;
             border-color: #cc0000;
         }
+		.title-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .qr-code {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 85px;
+            height: auto;
+        }
+
+        .title-container h1 {
+            margin: 0;  /* Remove default margin */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1><center>Mishail's Memory Game</center></h1>
+		
+            <div class="title-container">
+                <img src="./images/QRcode.png" alt="QR Code" class="qr-code">
+                <h1>Mishail's Memory Game</h1>
+            </div>
             
             <div class="game-controls">
                 <h2>Game Settings</h2>
